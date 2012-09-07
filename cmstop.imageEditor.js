@@ -3,13 +3,13 @@
  *
  * @copyright (c) CmsTop {@link http://www.cmstop.com}
  * @author    kakalong {@link http://yanbingbing.com}
- * @version   $Id: cmstop.imageEditor.js 5205 2012-04-15 14:34:55Z kakalong $
+ * @version   $Id: cmstop.imageEditor.js 6062 2012-08-08 04:08:49Z kakalong $
  */
 (function(window, undefined){
 var document = window.document,
 R_SPLIT = /[\s|,]+/,
 INSTS = {},
-SWF_URL = 'imageEditor/CmsTopImageEditor.swf',
+SWF_URL = 'imageEditor/ImageEditor.swf',
 overlay = null, 
 flashVersion = (function(){
 	try {
@@ -124,33 +124,30 @@ function showOverlay() {
 	}
 	overlay = toElement('<div style="position:fixed;top:0;left:0;z-index:999998;height:100%;width:100%;background-color:black;opacity:0.5;filter:Alpha(Opacity=50);"></div>');
 	append(document.body, overlay);
-	var mousewheel = function(){
+	var halt = function(event){
 		if (!overlay.offsetWidth) {
 			return;
 		}
-		var event = arguments[0] || window.event;
-		if (event.preventDefault) {
-			event.preventDefault();
-		}
+		event = event || window.event;
+		event.preventDefault && event.preventDefault();
 		event.returnValue = false;
-		if (event.stopPropagation) {
-			event.stopPropagation();
-		}
+		event.stopPropagation && event.stopPropagation();
 		event.cancelBubble = true;
-	}, esc = function(){
-		if ((arguments[0] || window.event).keyCode == 27) {
+	}, esc = function(event){
+		if ((event || window.event).keyCode == 27) {
 			for (var k in INSTS) {
 				INSTS[k].close();
 			}
 		}
 	};
 	if (document.addEventListener) {
-		document.addEventListener(document.onmousewheel === undefined
-			? 'DOMMouseScroll' : 'mousewheel', mousewheel, false);
+		document.addEventListener('onmousewheel' in document ? 'mousewheel' : 'DOMMouseScroll', halt, false);
+		document.addEventListener('mousedown', halt, false);
 		document.addEventListener('keypress', esc, false);
-	} else if (document.attachEvent) {
-		document.attachEvent('onmousewheel', mousewheel);
-		document.attachEvent('onkeypress', esc, false);
+	} else {
+		document.attachEvent('onmousewheel', halt);
+		document.attachEvent('onmousedown', halt);
+		document.attachEvent('onkeypress', esc);
 	}
 }
 function removeEditor(t) {

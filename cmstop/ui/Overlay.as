@@ -69,7 +69,7 @@ package cmstop.ui
 					controller.updateLayer();
 				}
 			});
-			controller.addEventListener(KeyboardEvent.KEY_UP, function(e:KeyboardEvent) {
+			controller.addEventListener(KeyboardEvent.KEY_UP, function(e:KeyboardEvent):void {
 				if (e.keyCode == 46) { // delete
 					controlay.removeChild(controller);
 					overlayContainer.removeChild(layer);
@@ -77,10 +77,10 @@ package cmstop.ui
 				}
 			});
 			var start:Array = null;
-			controller.addEventListener(ImageEvent.DRAG_START, function() {
+			controller.addEventListener(ImageEvent.DRAG_START, function():void{
 				start = [controller.rect, controller.rotation];
 			});
-			controller.addEventListener(ImageEvent.DRAG_END, function() {
+			controller.addEventListener(ImageEvent.DRAG_END, function():void{
 				if (start != null) {
 					container.log('OverlayDrag', controller, start, [controller.rect, controller.rotation], canvas.scale);
 					start = null;

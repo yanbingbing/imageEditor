@@ -12,7 +12,7 @@ package cmstop
 {
 	import cmstop.ui.CanvasContainer;
 	import cmstop.ui.ImageEditor;
-	import com.adobe.serialization.json.JSON;
+	
 	import flash.external.ExternalInterface;
 	import flash.net.URLVariables;
 	import flash.text.TextFormat;
@@ -83,11 +83,11 @@ package cmstop
 		}
 		public static function dump(val:*):void {
 			trace(val);
-			ExternalInterface.call("console.info("+JSON.encode(val)+")");
+			ExternalInterface.call("console.info("+JSON.stringify(val)+")");
 		}
 		
 		public static function trigger(evt:String, ...args):void {
-			ExternalInterface.call('ImageEditor.trigger("' + params.guid + '", "' + evt + '", '+JSON.encode(args)+')');
+			ExternalInterface.call('ImageEditor.trigger("' + params.guid + '", "' + evt + '", '+JSON.stringify(args)+')');
 		}
 	}
 }

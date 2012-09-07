@@ -10,18 +10,23 @@
  */
 package cmstop.ui {
 	
-	import cmstop.events.ImageEvent;
 	import cmstop.FocusManager;
 	import cmstop.Global;
 	import cmstop.Uploader;
 	import cmstop.XLoader;
+	import cmstop.events.ImageEvent;
+	
 	import com.adobe.images.JPGEncoder;
 	import com.adobe.images.PNGEncoder;
-	import com.adobe.serialization.json.JSON;
+	
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.DisplayObject;
+	import flash.display.Sprite;
+	import flash.display.StageAlign;
 	import flash.display.StageDisplayState;
+	import flash.display.StageScaleMode;
+	import flash.events.*;
 	import flash.external.ExternalInterface;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
@@ -29,18 +34,14 @@ package cmstop.ui {
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
 	import flash.net.navigateToURL;
-	import flash.display.Sprite;
-	import flash.display.StageAlign;
-	import flash.display.StageScaleMode;
-	import flash.events.*;
 	import flash.system.Security;
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.ui.ContextMenu;
 	import flash.ui.ContextMenuItem;
 	import flash.utils.ByteArray;
-	import flash.utils.setTimeout;
 	import flash.utils.Timer;
+	import flash.utils.setTimeout;
 	
 	public class ImageEditor extends Sprite {
 		[Embed (source = "/assets/top-panel.png")]
@@ -137,7 +138,7 @@ package cmstop.ui {
 			
 			var menu:ContextMenu= new ContextMenu();
 			menu.hideBuiltInItems();
-			var menuItem:ContextMenuItem = new ContextMenuItem("CmsTop Image Editor 0.9", false, true);
+			var menuItem:ContextMenuItem = new ContextMenuItem("CmsTop Image Editor 0.92", false, true);
 			menuItem.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, goCmsTop);
 			menu.customItems.push(menuItem);
 			this.contextMenu = menu;
@@ -152,27 +153,18 @@ package cmstop.ui {
 			var client:Array = null;
 			try {
 				client = ExternalInterface.call('eval', '(function(){return [document.cookie, location.host, location.protocol, location.pathname];})()') as Array;
-			} catch (e:Error) {
-				CONFIG::DEBUG{Global.dump(e);}
-			}
+			} catch (e:Error) {}
 			if (client == null) {
-				CONFIG::RELEASE {
-					MsgBox.getInstance(stage).confirm("无法与浏览器交互，请检查配置");
-					return;
-				}
-				CONFIG::DEBUG {
-					var match:Object = /^(file:)\/\/(.*)$/i.exec(stage.loaderInfo.url);
-					client = ["", "", match[1], match[2]];
-				}
+				MsgBox.getInstance(stage).confirm("无法与浏览器交互，请检查配置");
+				return;
 			}
-			CONFIG::DEBUG{Global.dump(client);}
 			Global.authCookie = client[0];
 			Global.clientHost = client[2] + "//" + client[1];
 			Global.clientPath = client[3];
 			
 			var request:URLRequest = new URLRequest(Global.getClientUrl(Global.params.config || 'imageEditor.conf'));
 			
-			XLoader.load(XLoader.TEXT, request, function(json:Object) {
+			XLoader.load(XLoader.TEXT, request, function(json:Object):void{
 				var fields:Array = [
 					"authFieldName", "readFieldName", "uploadFieldName", "sizeListUrl",
 					"ratioListUrl", "waterListUrl", "saveUrl", "readUrl" ];
@@ -182,7 +174,7 @@ package cmstop.ui {
 					}
 				}
 				init();
-			}, function(type:String, text:String) {
+			}, function(type:String, text:String):void{
 				MsgBox.getInstance(stage).confirm("配置失败 ["+type+":"+text+"]");
 			});
 		}
@@ -244,13 +236,8 @@ package cmstop.ui {
 			var file:String = String(Global.params.file);
 			
 			if (!file) {
-				CONFIG::RELEASE {
-					MsgBox.getInstance(stage).confirm("没有对象");
-					return;
-				}
-				CONFIG::DEBUG {
-					file = "image.jpg";
-				}
+				MsgBox.getInstance(stage).confirm("没有对象");
+				return;
 			}
 			var i:int = file.lastIndexOf('.');
 			if (i > 0 && file.substr(i + 1).toLowerCase() == "png") {
@@ -259,14 +246,10 @@ package cmstop.ui {
 			} else {
 				_saveType = "JPEG";
 			}
-			var url:String;
-			if (!/^\w{3,4}:\/\//.test(file)) {
-				var data:URLVariables = new URLVariables();
-				data[Global.readFieldName] = file;
-				data[Global.authFieldName] = Global.authCookie;
-				file = Global.getClientUrl(Global.readUrl, data);
-			}
-			_container.loadPicture(file);
+			var data:URLVariables = new URLVariables();
+			data[Global.readFieldName] = file;
+			data[Global.authFieldName] = Global.authCookie;
+			_container.loadPicture(Global.getClientUrl(Global.readUrl, data));
 			_container.addEventListener(ImageEvent.CANVAS_INITED, function():void {
 				_canvas = _container.canvas;
 				
@@ -353,7 +336,7 @@ package cmstop.ui {
 			});
 			redo.state = Button.STATE_DISABLED;
 			
-			_container.addEventListener(ImageEvent.HISTORY_CHANGE, function(){
+			_container.addEventListener(ImageEvent.HISTORY_CHANGE, function():void{
 				undo.state = _container.canUndo() ? Button.STATE_DEFAULT : Button.STATE_DISABLED;
 				redo.state = _container.canRedo() ? Button.STATE_DEFAULT : Button.STATE_DISABLED;
 			});
@@ -363,7 +346,7 @@ package cmstop.ui {
 				.addState(Button.STATE_ACTIVED, null, -1, 2)
 				.addState(Button.STATE_ACTIVED_HOVER, null, -1, 3);
 			_topRightArea.addChild(fullscreen);
-			fullscreen.addEventListener(MouseEvent.CLICK, function():void {
+			fullscreen.addEventListener(MouseEvent.CLICK, function():void{
 				switch(stage.displayState) {
 				case StageDisplayState.NORMAL:
 					stage.displayState = StageDisplayState.FULL_SCREEN;    
@@ -373,7 +356,7 @@ package cmstop.ui {
 					break;
 				}
 			});
-			stage.addEventListener(FullScreenEvent.FULL_SCREEN, function(){
+			stage.addEventListener(FullScreenEvent.FULL_SCREEN, function():void{
 				fullscreen.state = stage.displayState == StageDisplayState.FULL_SCREEN ? Button.STATE_ACTIVED : Button.STATE_DEFAULT;
 			});
 			fullscreen.y = (_topPanelHeight - fullscreen.height) / 2;
@@ -589,8 +572,8 @@ package cmstop.ui {
 		}
 		private function wantText(e:MouseEvent):void {
 			var hasCapture:Boolean = _canvas.hasCapture(e);
-			var noAssoc = !(_tabGroup["TEXT"].panel as ControlPanel).hasAssoc();
-			var focusNotInLay = stage.focus == null || !(_canvas.overlayContainer.contains(stage.focus) || _container.controlay.contains(stage.focus));
+			var noAssoc:Boolean = !(_tabGroup["TEXT"].panel as ControlPanel).hasAssoc();
+			var focusNotInLay:Boolean = stage.focus == null || !(_canvas.overlayContainer.contains(stage.focus) || _container.controlay.contains(stage.focus));
 			if (hasCapture && noAssoc && focusNotInLay && !_willTextActived && !_container.inDrag()) {
 				activeWantText(true);
 			} else if (!hasCapture && _willTextActived) {
@@ -685,25 +668,25 @@ package cmstop.ui {
 		
 		private function initUploader():void {
 			_uploader = new Uploader(Global.uploadFieldName, Global.getClientUrl(Global.saveUrl));
-			_uploader.addEventListener(ImageEvent.UPLOAD_COMPLETE, function(e:ImageEvent) {
+			_uploader.addEventListener(ImageEvent.UPLOAD_COMPLETE, function(e:ImageEvent):void{
 				_inUpload = false;
 				try {
-					var json:Object = JSON.decode(e.data as String);
+					var json:Object = JSON.parse(e.data as String);
 				} catch (err:Error) {
 					MsgBox.getInstance(stage).tip("返回信息解析错误");
 					return;
 				}
 				if (json.state) {
 					_container.savePoint();
-					MsgBox.getInstance(stage).confirm("保存成功，关闭窗口?", function() {
+					MsgBox.getInstance(stage).confirm("保存成功，关闭窗口?", function():void{
 						Global.trigger('close');
-					}, function(){});
+					}, function():void{});
 					Global.trigger('saved', json);
 				} else {
 					MsgBox.getInstance(stage).tip(json.error || "未知错误");
 				}
 			});
-			_uploader.addEventListener(ImageEvent.UPLOAD_ERROR, function(e:ImageEvent) {
+			_uploader.addEventListener(ImageEvent.UPLOAD_ERROR, function(e:ImageEvent):void{
 				_inUpload = false;
 				var err:Object = e.data as Object;
 				MsgBox.getInstance(stage).tip(err.type + ":" +err.text);
@@ -733,9 +716,9 @@ package cmstop.ui {
 		
 		private function onClickClose(e:MouseEvent):void {
 			if (_container.hasModified()) {
-				MsgBox.getInstance(stage).confirm("当前修改未保存，确定要关闭?", function() {
+				MsgBox.getInstance(stage).confirm("当前修改未保存，确定要关闭?", function():void{
 					Global.trigger('close');
-				}, function(){});
+				}, function():void{});
 			} else {
 				Global.trigger('close');
 			}

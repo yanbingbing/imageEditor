@@ -49,7 +49,7 @@ package cmstop.ui
 			
 			var btn:Button = new Button(40, 16);
 			btn.setText("估算", Global.textHoverFormat);
-			btn.addEventListener(MouseEvent.CLICK, function(){
+			btn.addEventListener(MouseEvent.CLICK, function():void{
 				text.text = Global.formatByte((new JPGEncoder(quality)).encode(Global.container.bitmapData).length);
 			});
 			addChild(btn);

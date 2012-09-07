@@ -121,7 +121,7 @@ package cmstop.ui
 				}
 			});
 			var btn:Button = createButton("应用裁剪");
-			btn.addEventListener(MouseEvent.CLICK, function() {
+			btn.addEventListener(MouseEvent.CLICK, function():void{
 				if (_container.cropVisible) {
 					_container.applyCrop();
 				} else {

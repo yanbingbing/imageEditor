@@ -10,18 +10,18 @@
  */
 package cmstop.ui 
 {
-	import cmstop.events.ImageEvent;
-	import cmstop.Global;
 	import cmstop.XLoader;
+	import cmstop.events.ImageEvent;
+
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.DisplayObject;
 	import flash.display.Sprite;
+	import flash.events.*;
 	import flash.geom.Matrix;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.net.URLRequest;
-	import flash.events.*;
 	import flash.ui.Mouse;
 	import flash.ui.MouseCursor;
 
@@ -35,7 +35,6 @@ package cmstop.ui
 		private var _canvas:Canvas = null;
 		private var _controlay:Sprite = new Sprite();
 		private var _crop:Cropper = null;
-		private var _progressBar:ProgressBar = null;
 		private var _container:Sprite = new Sprite();
 		private var _stageWidth:Number = 0;
 		private var _stageHeight:Number = 0;
@@ -136,19 +135,10 @@ package cmstop.ui
 		
 		public function loadPicture(url:String):void {
 			_picInited = false;
-			if (_progressBar == null) {
-				_progressBar = new ProgressBar();
-				addChild(_progressBar);
-			} else {
-				_progressBar.reset();
-				_progressBar.visible = true;
-			}
-			_progressBar.y = _stageHeight * .3;
-			_progressBar.x = _stageWidth / 2;
+			MsgBox.getInstance(stage).loading("图片加载中");
 			
 			XLoader.load(XLoader.IMAGE, new URLRequest(url), function(bmp:BitmapData, bytes:uint):void {
-				_progressBar.update(1);
-				_progressBar.visible = false;
+				MsgBox.getInstance(stage).hide();
 				if (_canvas != null) {
 					_canvas.bitmapData = bmp;
 				} else {
@@ -162,10 +152,7 @@ package cmstop.ui
 				setMinScale();
 				dispatchEvent(new ImageEvent(ImageEvent.CANVAS_INITED));
 			}, function(type:String, text:String):void {
-				_progressBar.visible = false;
 				MsgBox.getInstance(stage).tip("图片不可用["+type+":"+text+"]");
-			}, function(event:ProgressEvent):void{
-				_progressBar.update(event.bytesLoaded / event.bytesTotal);
 			});
 		}
 		
@@ -212,7 +199,7 @@ package cmstop.ui
 			return _crop;
 		}
 		
-		private function initCrop(rect):void {
+		private function initCrop(rect:Rectangle):void {
 			_crop = new Cropper(_canvas, rect);
 			_controlay.addChild(_crop);
 			addEventListener(ImageEvent.BITMAPDATA_CHANGE, function():void{
@@ -234,9 +221,7 @@ package cmstop.ui
 			_crop.visible = false;
 			setScale(1);
 			var newbmpData:BitmapData = new BitmapData(Math.floor(clip.width), Math.floor(clip.height), true, 0xFFFFFF);
-			var mx:Matrix = new Matrix();
-			mx.tx = -clip.x;
-			mx.ty = -clip.y;
+			var mx:Matrix = new Matrix(1, 0, 0, 1, -clip.x, -clip.y);
 			newbmpData.draw(this.newBitmapData, mx);
 			bitmapData = newbmpData;
 		}
@@ -309,7 +294,7 @@ package cmstop.ui
 			var lays:Array = [], i:uint = _controlay.numChildren,
 				d:DisplayObject, c:Controller, s:Sprite;
 			while (i-- > 0) {
-				var d:DisplayObject = _controlay.getChildAt(i);
+				d = _controlay.getChildAt(i);
 				if (d is Controller) {
 					c = d as Controller;
 					s = c.layer;

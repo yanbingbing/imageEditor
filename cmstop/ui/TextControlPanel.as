@@ -37,7 +37,7 @@ package cmstop.ui
 				name:"无",
 				value:"None"
 			}];
-			allFonts.sortOn("fontName", Array.DESCENDING).forEach(function(item:Font, index:uint, arr:Array) {
+			allFonts.sortOn("fontName", Array.DESCENDING).forEach(function(item:Font, index:uint, arr:Array):void{
 				source.push({
 					name:item.fontName,
 					value:item.fontName

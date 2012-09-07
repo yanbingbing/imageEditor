@@ -10,9 +10,10 @@
  */
 package cmstop.ui 
 {
-	import cmstop.events.ImageEvent;
 	import cmstop.Global;
 	import cmstop.XLoader;
+	import cmstop.events.ImageEvent;
+	
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.Sprite;
@@ -289,7 +290,7 @@ package cmstop.ui
 				slider.percent = (v - min) / (max - min);
 				change(name, v);
 			};
-			text.addEventListener(KeyboardEvent.KEY_DOWN, function(e:KeyboardEvent) {
+			text.addEventListener(KeyboardEvent.KEY_DOWN, function(e:KeyboardEvent):void{
 				e.keyCode == 13 && _c();
 			});
 			text.addEventListener(FocusEvent.FOCUS_OUT, _c);
@@ -372,11 +373,14 @@ package cmstop.ui
 			btn.addChild(loading);
 			loading.x = 28;
 			loading.y = 28;
-			XLoader.load(XLoader.IMAGE, new URLRequest(item.url), function(data:BitmapData, bytes:*):void{
+			var data:URLVariables = new URLVariables();
+			data[Global.readFieldName] = item.url;
+			data[Global.authFieldName] = Global.authCookie;
+			
+			XLoader.load(XLoader.IMAGE, new URLRequest(Global.getClientUrl(Global.readUrl, data)), function(data:BitmapData, bytes:*):void{
 				btn.removeChild(loading);
 				var scale:Number = 54 / (data.width > data.height ? data.height : data.width);
-				var mx:Matrix = new Matrix();
-				mx.scale(scale, scale);
+				var mx:Matrix = new Matrix(scale, 0, 0, scale);
 				var snap:BitmapData = new BitmapData(54, 54, true, 0xFFFFFF);
 				snap.draw(data, mx);
 				var bmp:Bitmap = new Bitmap(snap);
@@ -413,7 +417,7 @@ package cmstop.ui
 			data[Global.authFieldName] = Global.authCookie;
 			var request:URLRequest = new URLRequest(Global.getClientUrl(url, data));
 			var showSource:Function = function(source:Array):void {
-				source.forEach(function(item:String, index:uint, arr:Array) {
+				source.forEach(function(item:String, index:uint, arr:Array):void{
 					list.addChild(createTextButton(item, index, func));
 				});
 				list.graphics.clear();
@@ -452,7 +456,7 @@ package cmstop.ui
 				list.removeChild(loading);
 				var json:Array = (content is Array) ? content as Array : null;
 				if (json) {
-					json.forEach(function(item:Object, index:uint, arr:Array) {
+					json.forEach(function(item:Object, index:uint, arr:Array):void{
 						list.addChild(createImageButton(item, index, func));
 					});
 					list.graphics.clear();

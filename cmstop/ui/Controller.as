@@ -10,10 +10,11 @@
  */
 package cmstop.ui {
 	
-	import cmstop.events.ImageEvent;
 	import cmstop.FocusManager;
-	import flash.display.DisplayObject;
-	import flash.display.MovieClip;
+	import cmstop.events.ImageEvent;
+	
+	import flash.display.CapsStyle;
+	import flash.display.LineScaleMode;
 	import flash.display.Sprite;
 	import flash.events.*;
 	import flash.geom.Point;
@@ -21,7 +22,7 @@ package cmstop.ui {
 	import flash.utils.Timer;
 	
 	
-	public class Controller extends MovieClip {
+	public class Controller extends Sprite {
 		
 		private const PI_1_8:Number = Math.tan(Math.PI / 8);
 		private const PI_3_8:Number = Math.tan(Math.PI * 3 / 8);
@@ -36,7 +37,21 @@ package cmstop.ui {
 			RESIZE_S  : -90,
 			RESIZE_SE : -45
 		};
-		public var area:MovieClip;
+		private var _area:Sprite;
+		private var _areaMove:Sprite;
+		private var _areaResizeNW:Sprite;
+		private var _areaResizeSW:Sprite;
+		private var _areaResizeNE:Sprite;
+		private var _areaResizeSE:Sprite;
+		private var _areaResizeN:Sprite;
+		private var _areaResizeW:Sprite;
+		private var _areaResizeS:Sprite;
+		private var _areaResizeE:Sprite;
+		private var _areaRotateNW:Sprite;
+		private var _areaRotateSW:Sprite;
+		private var _areaRotateNE:Sprite;
+		private var _areaRotateSE:Sprite;
+		
 		private var _canvas:Canvas;
 		private var _scale:Number;
 		private var _layer:Sprite;
@@ -62,7 +77,17 @@ package cmstop.ui {
 			_decorate = layer.getChildAt(0) as Sprite;
 			_layer = layer;
 			FocusManager.addItem(this, _layer);
-			addEventListener(Event.ADDED_TO_STAGE, init);
+			initArea();
+			
+			_area.x = _layer.x;
+			_area.y = _layer.y;
+			_area.rotation = _layer.rotation;
+			
+			setWidth();
+			setHeight();
+			
+			_layer.addEventListener(MouseEvent.MOUSE_DOWN, mouseDown);
+			
 			_timer.addEventListener(TimerEvent.TIMER_COMPLETE, function():void{
 				_timer.reset();
 			});
@@ -70,26 +95,79 @@ package cmstop.ui {
 		
 		public function fixRatio(flag:Boolean = true):void {
 			if (flag) {
-				_ratio = area.MOVE.width / area.MOVE.height;
+				_ratio = _areaMove.width / _areaMove.height;
 			} else {
 				_ratio = 0;
 			}
 		}
 		
-		private function init(e:Event):void {
-			removeEventListener(Event.ADDED_TO_STAGE, init);
-			area.x = _layer.x;
-			area.y = _layer.y;
-			area.rotation = _layer.rotation;
+		private function createResizer(x:Number, y:Number, name:String):Sprite {
+			var handle:Sprite = new Sprite();
+			handle.graphics.beginFill(0xFFFFFF);
+			handle.graphics.lineStyle(0, 0x0099FF);
+			handle.graphics.moveTo(-4, -4);
+			handle.graphics.lineTo(4, -4);
+			handle.graphics.lineTo(4, 4);
+			handle.graphics.lineTo(-4, 4);
+			handle.graphics.lineTo(-4, -4);
+			handle.graphics.endFill();
+			_area.addChild(handle);
+			handle.x = x;
+			handle.y = y;
+			handle.name = name;
+			return handle;
+		}
+		
+		private function createRotater(x:Number, y:Number, name:String):Sprite {
+			var handle:Sprite = new Sprite();
+			handle.graphics.beginFill(0, 0);
+			handle.graphics.drawRect(-15, -15, 30, 30);
+			handle.graphics.endFill();
+			_area.addChild(handle);
+			handle.x = x;
+			handle.y = y;
+			handle.name = name;
+			return handle;
+		}
+		
+		private function initArea():void {
+			_area = new Sprite();
+			addChild(_area);
 			
-			setWidth();
-			setHeight();
+			_areaRotateNW = createRotater(-150, -150, 'ROTATE_NW');
+			_areaRotateNE = createRotater(150, -150, 'ROTATE_NE');
+			_areaRotateSW = createRotater(-150, 150, 'ROTATE_SW');
+			_areaRotateSE = createRotater(150, 150, 'ROTATE_SE');
 			
-			area.addEventListener(MouseEvent.MOUSE_DOWN, mouseDown);
-			_layer.addEventListener(MouseEvent.MOUSE_DOWN, mouseDown);
-			area.addEventListener(MouseEvent.MOUSE_OVER, mouseOver);
-			area.addEventListener(MouseEvent.MOUSE_OUT, mouseOut);
-			area.addEventListener(MouseEvent.ROLL_OUT, rollOut);
+			_areaMove = new Sprite();
+			_areaMove.graphics.beginFill(0xFFFFFF, 0);
+			_areaMove.graphics.lineStyle(0, 0x0099FF, 1, false, LineScaleMode.NONE, CapsStyle.NONE);
+			_areaMove.graphics.moveTo(-150, -150);
+			_areaMove.graphics.lineTo(-150, 150);
+			_areaMove.graphics.lineTo(150, 150);
+			_areaMove.graphics.lineTo(150, -150);
+			_areaMove.graphics.lineTo(-150, -150);
+			_areaMove.graphics.endFill();
+			_area.addChild(_areaMove);
+			_areaMove.x = 0;
+			_areaMove.y = 0;
+			_areaMove.name = 'MOVE';
+			
+			
+			_areaResizeN = createResizer(0, -150, 'RESIZE_N');
+			_areaResizeW = createResizer(-150, 0, 'RESIZE_W');
+			_areaResizeS = createResizer(0, 150, 'RESIZE_S');
+			_areaResizeE = createResizer(150, 0, 'RESIZE_E');
+			_areaResizeNW = createResizer(-150, -150, 'RESIZE_NW');
+			_areaResizeNE = createResizer(150, -150, 'RESIZE_NE');
+			_areaResizeSW = createResizer(-150, 150, 'RESIZE_SW');
+			_areaResizeSE = createResizer(150, 150, 'RESIZE_SE');
+			
+			_area.addEventListener(MouseEvent.MOUSE_DOWN, mouseDown);
+			_area.addEventListener(MouseEvent.MOUSE_OVER, mouseOver);
+			_area.addEventListener(MouseEvent.MOUSE_OUT, mouseOut);
+			_area.addEventListener(MouseEvent.ROLL_OUT, rollOut);
+			
 		}
 		
 		private function mouseOver(e:MouseEvent):void {
@@ -128,10 +206,10 @@ package cmstop.ui {
 			this.visible = true;
 			_actionLocked = true;
 			_startPoint = new Point(e.stageX, e.stageY);
-			_origRectangle = new Rectangle(area.x, area.y, area.MOVE.width, area.MOVE.height);
-			_origin = new Point(area.x, area.y);
+			_origRectangle = new Rectangle(_area.x, _area.y, _areaMove.width, _areaMove.height);
+			_origin = new Point(_area.x, _area.y);
 			_startRotation = getDegree(this.globalToLocal(_startPoint), _origin);
-			_origRotation = area.rotation;
+			_origRotation = _area.rotation;
 			_state = e.target.name;
 			switch (true) {
 			case _state == 'MOVE':
@@ -158,7 +236,7 @@ package cmstop.ui {
 			if (name.substr(0, 6) != 'RESIZE') {
 				return name;
 			}
-			var a:Number = (ANGLES[name] - area.rotation) % 180;
+			var a:Number = (ANGLES[name] - _area.rotation) % 180;
 			if (a == 0) {
 				return 'RESIZE_W';
 			}
@@ -194,8 +272,8 @@ package cmstop.ui {
 		
 		private function dragResize(e:MouseEvent):void {
 			_draging || dragStart();
-			var nlPoint:Point = area.globalToLocal(new Point(e.stageX, e.stageY));
-			var slPoint:Point = area.globalToLocal(_startPoint);
+			var nlPoint:Point = _area.globalToLocal(new Point(e.stageX, e.stageY));
+			var slPoint:Point = _area.globalToLocal(_startPoint);
 			var nH:Number = _origRectangle.height;
 			var nW:Number = _origRectangle.width;
 			var minsize:Number = MIN_SIZE * _scale;
@@ -229,8 +307,8 @@ package cmstop.ui {
 		
 		private function dragResizeRatio(e:MouseEvent):void {
 			_draging || dragStart();
-			var nlPoint:Point = area.globalToLocal(new Point(e.stageX, e.stageY));
-			var slPoint:Point = area.globalToLocal(_startPoint);
+			var nlPoint:Point = _area.globalToLocal(new Point(e.stageX, e.stageY));
+			var slPoint:Point = _area.globalToLocal(_startPoint);
 			var nH:Number = _origRectangle.height;
 			var nW:Number = _origRectangle.width;
 			if (_state.lastIndexOf('S') > 6) {
@@ -295,22 +373,22 @@ package cmstop.ui {
 		}
 		
 		private function setTop(top:Number):void {
-			area.y = top;
+			_area.y = top;
 			_layer.y = top;
 		}
 		
 		private function setLeft(left:Number):void {
-			area.x = left;
+			_area.x = left;
 			_layer.x = left;
 		}
 		
 		public function setRotation(rotate:Number):void {
-			var o:Number = area.rotation;
+			var o:Number = _area.rotation;
 			rotate = Math.round(rotate);
-			area.rotation = rotate;
+			_area.rotation = rotate;
 			_layer.rotation = rotate;
-			if (o != area.rotation) {
-				dispatchEvent(new ImageEvent(ImageEvent.ROTATE_CHANGE, area.rotation));
+			if (o != _area.rotation) {
+				dispatchEvent(new ImageEvent(ImageEvent.ROTATE_CHANGE, _area.rotation));
 			}
 		}
 		
@@ -321,17 +399,19 @@ package cmstop.ui {
 				_decorate.height = height;
 			}
 			var halfH:Number = height / 2;
-			area.MOVE.height = height;
-			area.RESIZE_NW.y = -halfH;
-			area.RESIZE_NE.y = -halfH;
-			area.RESIZE_SE.y = halfH;
-			area.RESIZE_SW.y = halfH;
-			area.ROTATE_NW.y = -halfH;
-			area.ROTATE_NE.y = -halfH;
-			area.ROTATE_SE.y = halfH;
-			area.ROTATE_SW.y = halfH;
-			area.RESIZE_N.y = -halfH;
-			area.RESIZE_S.y = halfH;
+			_areaMove.height = height;
+			_areaResizeNW.y = -halfH;
+			_areaResizeNE.y = -halfH;
+			_areaResizeSE.y = halfH;
+			_areaResizeSW.y = halfH;
+			
+			_areaRotateNW.y = -halfH;
+			_areaRotateNE.y = -halfH;
+			_areaRotateSE.y = halfH;
+			_areaRotateSW.y = halfH;
+			
+			_areaResizeN.y = -halfH;
+			_areaResizeS.y = halfH;
 		}
 		
 		private function setWidth(width:Number = 0):void {
@@ -341,32 +421,32 @@ package cmstop.ui {
 				_decorate.width = width;
 			}
 			var halfW:Number = width / 2;
-			area.MOVE.width = width;
-			area.RESIZE_NW.x = -halfW;
-			area.RESIZE_NE.x = halfW;
-			area.RESIZE_SE.x = halfW;
-			area.RESIZE_SW.x = -halfW;
-			area.ROTATE_NW.x = -halfW;
-			area.ROTATE_NE.x = halfW;
-			area.ROTATE_SE.x = halfW;
-			area.ROTATE_SW.x = -halfW;
-			area.RESIZE_E.x = halfW;
-			area.RESIZE_W.x = -halfW;
+			_areaMove.width = width;
+			_areaResizeNW.x = -halfW;
+			_areaResizeNE.x = halfW;
+			_areaResizeSE.x = halfW;
+			_areaResizeSW.x = -halfW;
+			_areaRotateNW.x = -halfW;
+			_areaRotateNE.x = halfW;
+			_areaRotateSE.x = halfW;
+			_areaRotateSW.x = -halfW;
+			_areaResizeE.x = halfW;
+			_areaResizeW.x = -halfW;
 		}
 		
 		
 		public function updateScale():void {
 			var ns:Number = _canvas.scale / _scale;
 			_scale = _canvas.scale;
-			setLeft(area.x * ns);
-			setTop(area.y * ns);
-			setHeight(area.MOVE.height * ns);
-			setWidth(area.MOVE.width * ns);
+			setLeft(_area.x * ns);
+			setTop(_area.y * ns);
+			setHeight(_areaMove.height * ns);
+			setWidth(_areaMove.width * ns);
 			dispatchEvent(new ImageEvent(ImageEvent.SCALE_CHANGE, _scale));
 		}
 		
 		public function updateLayer():void {
-			area.rotation = _layer.rotation;
+			_area.rotation = _layer.rotation;
 			setWidth();
 			setHeight();
 			if (_ratio) {
@@ -378,7 +458,7 @@ package cmstop.ui {
 		}
 		
 		public function setVisible(value:Boolean):void {
-			area.visible = value;
+			_area.visible = value;
 			_layer.visible = value;
 		}
 		
@@ -399,7 +479,7 @@ package cmstop.ui {
 		}
 		
 		public function get rect():Rectangle {
-			return new Rectangle(area.x, area.y, area.MOVE.width, area.MOVE.height);
+			return new Rectangle(_area.x, _area.y, _areaMove.width, _areaMove.height);
 		}
 	}
 }

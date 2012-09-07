@@ -10,9 +10,10 @@
  */
 package cmstop.ui 
 {
-	import cmstop.events.ImageEvent;
 	import cmstop.FocusManager;
 	import cmstop.Global;
+	import cmstop.events.ImageEvent;
+	
 	import flash.display.Bitmap;
 	import flash.display.DisplayObject;
 	import flash.display.Sprite;
@@ -137,7 +138,7 @@ package cmstop.ui
 		}
 		private function adapt():void {
 			if (!_inited) return;
-			var halfLineWidth = LINE_WIDTH / 2;
+			var halfLineWidth:Number = LINE_WIDTH / 2;
 			if (_dnyWidth != _curWidth) {
 				_curWidth = _dnyWidth;
 				_button.x = _curWidth + halfLineWidth - _iconWidth;

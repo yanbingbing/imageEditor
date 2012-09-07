@@ -43,7 +43,7 @@ package cmstop.ui
 		{
 			return;
 		}
-		private static function initCursor(name:String) {
+		private static function initCursor(name:String):void {
 			if (_inited[name]) {
 				return;
 			}

@@ -57,7 +57,7 @@ package cmstop
 			_stack.push(item);
 			_assoc.push(assoc);
 			if (blur == null) {
-				blur = function() {
+				blur = function():void{
 					item.visible = false;
 				};
 			}

@@ -11,20 +11,35 @@
 package cmstop.ui {
 	
 	import cmstop.events.ImageEvent;
-	import flash.display.DisplayObject;
-	import flash.display.MovieClip;
+	
+	import flash.display.BlendMode;
+	import flash.display.CapsStyle;
+	import flash.display.LineScaleMode;
+	import flash.display.Shape;
+	import flash.display.Sprite;
 	import flash.events.*;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
-	import flash.utils.setTimeout;
-	import flash.utils.clearTimeout;
-
 	
-	public class Cropper extends MovieClip {
+	public class Cropper extends Sprite {
 		
 		private const MIN_SIZE:Number = 20;
-		public var overlay:MovieClip;
-		public var area:MovieClip;
+		
+		private var _overlay:Sprite;
+		private var _overlayErase:Shape;
+		private var _overlayBg:Shape;
+		
+		private var _area:Sprite;
+		private var _areaResizeNW:Sprite;
+		private var _areaResizeN:Sprite;
+		private var _areaResizeNE:Sprite;
+		private var _areaResizeE:Sprite;
+		private var _areaResizeSE:Sprite;
+		private var _areaResizeS:Sprite;
+		private var _areaResizeSW:Sprite;
+		private var _areaResizeW:Sprite;
+		private var _areaMove:Sprite;
+		
 		private var _canvas:Canvas;
 		private var _state:String = '';
 		private var _draging:Boolean = false;
@@ -40,22 +55,83 @@ package cmstop.ui {
 		public function Cropper(canvas:Canvas, rect:Rectangle) {
 			_canvas = canvas;
 			_scale = canvas.scale;
+			initOverlay();
+			initArea();
 			this.rect = rect;
-			addEventListener(Event.ADDED_TO_STAGE, init);
 		}
 		
-		private function init(e:Event):void {
-			removeEventListener(Event.ADDED_TO_STAGE, init);
-			overlay.bg.width = _canvas.width;
-			overlay.bg.height = _canvas.height;
-			area.addEventListener(MouseEvent.MOUSE_DOWN, mouseDown);
-			area.addEventListener(MouseEvent.MOUSE_OVER, mouseOver);
-			area.addEventListener(MouseEvent.ROLL_OUT, rollOut);
-			area.MOVE.doubleClickEnabled = true;
-			area.MOVE.addEventListener(MouseEvent.DOUBLE_CLICK, function(e:MouseEvent):void {
+		private function initOverlay():void {
+			_overlay = new Sprite();
+			addChild(_overlay);
+			_overlay.blendMode = BlendMode.LAYER;
+			_overlayBg = new Shape();
+			_overlay.addChild(_overlayBg);
+			_overlayBg.x = 0;
+			_overlayBg.y = 0;
+			_overlayBg.graphics.beginFill(0xCCCCCC, .5);
+			_overlayBg.graphics.drawRect(0, 0, _canvas.width, _canvas.height);
+			_overlayBg.graphics.endFill();
+			_overlayErase = new Shape();
+			_overlay.addChild(_overlayErase);
+			_overlayErase.blendMode = BlendMode.ERASE;
+			_overlayErase.x = 0;
+			_overlayErase.y = 0;
+			_overlayErase.graphics.beginFill(0xFFFFFF);
+			_overlayErase.graphics.drawRect(0, 0, 300, 300);
+			_overlayErase.graphics.endFill();
+		}
+		
+		private function initArea():void {
+			_area = new Sprite();
+			addChild(_area);
+			_areaMove = new Sprite();
+			_areaMove.graphics.beginFill(0xFFFFFF, 0);
+			_areaMove.graphics.lineStyle(0, 0, 1, false, LineScaleMode.NONE, CapsStyle.NONE);
+			_areaMove.graphics.moveTo(0, 0);
+			_areaMove.graphics.lineTo(0, 300);
+			_areaMove.graphics.lineTo(300, 300);
+			_areaMove.graphics.lineTo(300, 0);
+			_areaMove.graphics.lineTo(0, 0);
+			_areaMove.graphics.endFill();
+			_area.addChild(_areaMove);
+			_areaMove.x = 0;
+			_areaMove.y = 0;
+			_areaMove.name = 'MOVE';
+			
+			_areaResizeN = createHandle(150, 0, 'RESIZE_N');
+			_areaResizeW = createHandle(0, 150, 'RESIZE_W');
+			_areaResizeS = createHandle(150, 300, 'RESIZE_S');
+			_areaResizeE = createHandle(300, 150, 'RESIZE_E');
+			_areaResizeNW = createHandle(0, 0, 'RESIZE_NW');
+			_areaResizeNE = createHandle(300, 0, 'RESIZE_NE');
+			_areaResizeSW = createHandle(0, 300, 'RESIZE_SW');
+			_areaResizeSE = createHandle(300, 300, 'RESIZE_SE');
+			_area.addEventListener(MouseEvent.MOUSE_DOWN, mouseDown);
+			_area.addEventListener(MouseEvent.MOUSE_OVER, mouseOver);
+			_area.addEventListener(MouseEvent.ROLL_OUT, rollOut);
+			_areaMove.doubleClickEnabled = true;
+			_areaMove.addEventListener(MouseEvent.DOUBLE_CLICK, function(e:MouseEvent):void {
 				dispatchEvent(new ImageEvent(ImageEvent.CROP));
 			});
 		}
+		
+		private function createHandle(x:Number, y:Number, name:String):Sprite {
+			var handle:Sprite = new Sprite();
+			handle.graphics.beginFill(0xFFFFFF);
+			handle.graphics.lineStyle(0, 0);
+			handle.graphics.moveTo(-4, -4);
+			handle.graphics.lineTo(-4, 4);
+			handle.graphics.lineTo(4, 4);
+			handle.graphics.lineTo(4, -4);
+			handle.graphics.lineTo(-4, -4);
+			handle.graphics.endFill();
+			_area.addChild(handle);
+			handle.x = x;
+			handle.y = y;
+			handle.name = name;
+			return handle;
+		}
+
 		private function mouseOver(e:MouseEvent):void {
 			if (_actionLocked) {
 				_backCursor = e.target.name;
@@ -77,7 +153,7 @@ package cmstop.ui {
 			_draging = true;
 			_actionLocked = true;
 			_startPoint = new Point(e.stageX, e.stageY);
-			_origRectangle = new Rectangle(area.x, area.y, area.MOVE.width, area.MOVE.height);
+			_origRectangle = new Rectangle(_area.x, _area.y, _areaMove.width, _areaMove.height);
 			switch (true) {
 			case _state == 'MOVE':
 				_dragFunc = dragMove;
@@ -303,58 +379,58 @@ package cmstop.ui {
 		}
 		
 		private function setTop(top:Number):void {
-			overlay.erase.y = top;
-			area.y = top;
+			_overlayErase.y = top;
+			_area.y = top;
 		}
 		
 		private function setLeft(left:Number):void {
-			overlay.erase.x = left;
-			area.x = left;
+			_overlayErase.x = left;
+			_area.x = left;
 		}
 		
 		private function setHeight(height:Number):void {
-			overlay.erase.height = height;
-			area.MOVE.height = height;
-			area.RESIZE_SW.y = height;
-			area.RESIZE_SE.y = height;
-			area.RESIZE_W.y = height / 2;
-			area.RESIZE_S.y = area.RESIZE_SW.y;
-			area.RESIZE_E.y = area.RESIZE_W.y;
+			_overlayErase.height = height;
+			_areaMove.height = height;
+			_areaResizeSW.y = height;
+			_areaResizeSE.y = height;
+			_areaResizeW.y = height / 2;
+			_areaResizeS.y = _areaResizeSW.y;
+			_areaResizeE.y = _areaResizeW.y;
 		}
 		
 		private function setWidth(width:Number):void {
-			overlay.erase.width = width;
-			area.MOVE.width = width;
-			area.RESIZE_NE.x = width;
-			area.RESIZE_SE.x = width;
-			area.RESIZE_N.x = width / 2;
-			area.RESIZE_S.x = area.RESIZE_N.x;
-			area.RESIZE_E.x = area.RESIZE_NE.x;
+			_overlayErase.width = width;
+			_areaMove.width = width;
+			_areaResizeNE.x = width;
+			_areaResizeSE.x = width;
+			_areaResizeN.x = width / 2;
+			_areaResizeS.x = _areaResizeN.x;
+			_areaResizeE.x = _areaResizeNE.x;
 		}
 		
 		override public function set visible(value:Boolean):void {
 			super.visible = value;
 			if (value) {
 				_scale = _canvas.scale;
-				overlay.bg.width = _canvas.width;
-				overlay.bg.height = _canvas.height;
+				_overlayBg.width = _canvas.width;
+				_overlayBg.height = _canvas.height;
 			}
 		}
 		
 		public function fixRatio(flag:Boolean = true):Number {
 			var o:Number = _ratio;
 			if (flag) {
-				_ratio = area.MOVE.width / area.MOVE.height;
-				area.RESIZE_N.visible = false;
-				area.RESIZE_W.visible = false;
-				area.RESIZE_S.visible = false;
-				area.RESIZE_E.visible = false;
+				_ratio = _areaMove.width / _areaMove.height;
+				_areaResizeN.visible = false;
+				_areaResizeW.visible = false;
+				_areaResizeS.visible = false;
+				_areaResizeE.visible = false;
 			} else {
 				_ratio = 0;
-				area.RESIZE_N.visible = true;
-				area.RESIZE_W.visible = true;
-				area.RESIZE_S.visible = true;
-				area.RESIZE_E.visible = true;
+				_areaResizeN.visible = true;
+				_areaResizeW.visible = true;
+				_areaResizeS.visible = true;
+				_areaResizeE.visible = true;
 			}
 			return _ratio || o;
 		}
@@ -362,12 +438,12 @@ package cmstop.ui {
 		public function updateScale():void {
 			var ns:Number = _canvas.scale / _scale;
 			_scale = _canvas.scale;
-			setLeft(area.x * ns);
-			setTop(area.y * ns);
-			setHeight(overlay.erase.height * ns);
-			setWidth(overlay.erase.width * ns);
-			overlay.bg.width = _canvas.width;
-			overlay.bg.height = _canvas.height;
+			setLeft(_area.x * ns);
+			setTop(_area.y * ns);
+			setHeight(_overlayErase.height * ns);
+			setWidth(_overlayErase.width * ns);
+			_overlayBg.width = _canvas.width;
+			_overlayBg.height = _canvas.height;
 		}
 		
 		public function set rect(v:Rectangle):void {
@@ -385,7 +461,7 @@ package cmstop.ui {
 		}
 		
 		public function get clip():Rectangle {
-			return new Rectangle(area.x / _scale, area.y / _scale, overlay.erase.width / _scale, overlay.erase.height / _scale);
+			return new Rectangle(_area.x / _scale, _area.y / _scale, _overlayErase.width / _scale, _overlayErase.height / _scale);
 		}
 	}
 }

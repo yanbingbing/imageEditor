@@ -57,7 +57,7 @@ package cmstop.ui
 			_h = addPxInput("高");
 			_w.text = _cw.toString();
 			_h.text = _ch.toString();
-			_container.addEventListener(ImageEvent.BITMAPDATA_CHANGE, function() {
+			_container.addEventListener(ImageEvent.BITMAPDATA_CHANGE, function():void{
 				if (visible && !_eventLock) {
 					_bitmapData = _container.bitmapData;
 					_ow = uint(_bitmapData.width);
@@ -175,8 +175,7 @@ package cmstop.ui
 			_ch = h;
 			_container.setScale(1);
 			var newbmpData:BitmapData = new BitmapData(w, h, true, 0xFFFFFF);
-			var mx:Matrix = new Matrix();
-			mx.scale(w / _bitmapData.width, h / _bitmapData.height);
+			var mx:Matrix = new Matrix(w / _bitmapData.width,0,0,h / _bitmapData.height);
 			newbmpData.draw(_bitmapData, mx);
 			_container.bitmapData = newbmpData;
 			_eventLock = false;

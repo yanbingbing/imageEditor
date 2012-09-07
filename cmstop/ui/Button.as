@@ -71,7 +71,7 @@ package cmstop.ui
 			this.buttonMode = true;
 			addEventListener(MouseEvent.ROLL_OVER, rollOver);
 			addEventListener(MouseEvent.ROLL_OUT, rollOut);
-			addEventListener(Event.ADDED_TO_STAGE, function() {
+			addEventListener(Event.ADDED_TO_STAGE, function():void{
 				stage.addEventListener(Event.MOUSE_LEAVE, rollOut);
 			});
 		}

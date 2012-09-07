@@ -10,14 +10,12 @@
  */
 package cmstop 
 {
-	import com.adobe.serialization.json.JSON;
-	import com.adobe.serialization.json.JSONParseError;
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.Loader;
+	import flash.events.*;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
-	import flash.events.*;
 	
 	public class XLoader 
 	{
@@ -32,7 +30,8 @@ package cmstop
 		public static function load(type:String, request:URLRequest, complete:Function = null, error:Function = null, progress:Function = null, json:Boolean = true):void
 		{
 			var url:String = request.url;
-			var random:String = (new Date()).getTime().toString(16);
+			var date:Date = new Date();
+			var random:String = date.getTime().toString(16);
 			request.url = url + (url.indexOf('?') > 0 ? '&' : '?') + random;
 			_stack.push([type, request, complete, error, progress, json]);
 			if (_numRuns < MAX_THREADS) {
@@ -85,8 +84,8 @@ package cmstop
 				var data:* = loader.data;
 				if (json) {
 					try {
-						data = JSON.decode(loader.data as String, false);
-					} catch (err:JSONParseError) {
+						data = JSON.parse(loader.data as String);
+					} catch (err:Error) {
 						if (error != null) {
 							error("JSONParseError", err.message);
 						}

@@ -70,13 +70,13 @@ package cmstop.ui
 			addTitle("水印控制");
 			addLabel("位置");
 			
-			var hover:Function = function(item:Sprite) {
+			var hover:Function = function(item:Sprite):void{
 				item.graphics.clear();
 				item.graphics.beginFill(0x6F6F6F);
 				item.graphics.drawRect(0, 0, 48, 28);
 				item.graphics.endFill();
 			};
-			var unhover:Function = function(item:Sprite) {
+			var unhover:Function = function(item:Sprite):void{
 				item.graphics.clear();
 				item.graphics.beginFill(0xAAAAAA);
 				item.graphics.drawRect(0, 0, 48, 28);
