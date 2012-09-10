@@ -70,7 +70,7 @@ package cmstop.ui
 				}
 			});
 			controller.addEventListener(KeyboardEvent.KEY_UP, function(e:KeyboardEvent):void {
-				if (e.keyCode == 46) { // delete
+				if (e.keyCode == 46 || e.keyCode == 8) { // delete
 					controlay.removeChild(controller);
 					overlayContainer.removeChild(layer);
 					container.log('OverlayDelete', controller, layer, controller.rect, canvas.scale);
