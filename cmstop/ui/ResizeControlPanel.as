@@ -10,8 +10,9 @@
  */
 package cmstop.ui 
 {
-	import cmstop.events.ImageEvent;
 	import cmstop.Global;
+	import cmstop.events.ImageEvent;
+	
 	import flash.display.BitmapData;
 	import flash.events.*;
 	import flash.geom.Matrix;
@@ -21,8 +22,6 @@ package cmstop.ui
 	{
 		private var _container:CanvasContainer;
 		private var _bitmapData:BitmapData;
-		private var _cw:Number;
-		private var _ch:Number;
 		private var _ow:uint;
 		private var _oh:uint;
 		private var _w:TextField;
@@ -46,17 +45,15 @@ package cmstop.ui
 			_inited = true;
 			addTitle("缩放尺寸");
 			_bitmapData = _container.newBitmapData;
-			_cw = uint(_bitmapData.width);
-			_ch = uint(_bitmapData.height);
-			_ow = _cw;
-			_oh = _ch;
+			_ow = uint(_bitmapData.width);
+			_oh = uint(_bitmapData.height);
 			var nw:Number = _ow;
 			var nh:Number = _oh;
 			_ratio = _ow / _oh;
 			_w = addPxInput("宽");
 			_h = addPxInput("高");
-			_w.text = _cw.toString();
-			_h.text = _ch.toString();
+			_w.text = _ow.toString();
+			_h.text = _oh.toString();
 			_container.addEventListener(ImageEvent.BITMAPDATA_CHANGE, function():void{
 				if (visible && !_eventLock) {
 					_bitmapData = _container.bitmapData;
@@ -137,7 +134,7 @@ package cmstop.ui
 				var size:Array = value.split('*');
 				nw = Number(size[0]);
 				nh = Number(size[1]);
-				if (nw <= 0 || nh <= 0 || nw > _bitmapData.width * 8 || nh > _bitmapData.height * 8) {
+				if (nw <= 0 || nh <= 0) {
 					return;
 				}
 				var c:Boolean = _r.checked;
@@ -147,7 +144,7 @@ package cmstop.ui
 				_w.text = _ow.toString();
 				_h.text = _oh.toString();
 				_r.checked = c;
-				applyScale(_ow, _oh);
+				applyScale(_ow, _oh, true);
 			}, Global.DEFAULT_SIZES);
 		}
 		
@@ -164,19 +161,28 @@ package cmstop.ui
 			}
 		}
 		
-		private function applyScale(w:Number, h:Number):void {
+		private function applyScale(w:Number, h:Number, adapt:Boolean = false):void {
 			w = Math.floor(w);
 			h = Math.floor(h);
-			if (w == _cw && h == _ch) {
+			_eventLock = true;
+			if (w == _container.bitmapData.width || h == _container.bitmapData.height) {
 				return;
 			}
-			_eventLock = true;
-			_cw = w;
-			_ch = h;
-			_container.setScale(1);
-			var newbmpData:BitmapData = new BitmapData(w, h, true, 0xFFFFFF);
-			var mx:Matrix = new Matrix(w / _bitmapData.width,0,0,h / _bitmapData.height);
-			newbmpData.draw(_bitmapData, mx);
+			var newbmpData:BitmapData = new BitmapData(w, h, true, 0xFFFFFF), mx:Matrix;
+			if (adapt) {
+				var s:Number, x:Number = 0, y:Number = 0;
+				if (_bitmapData.width / _bitmapData.height > w / h) {
+					s = h / _bitmapData.height;
+					x = (w - _bitmapData.width * s) / 2;
+				} else {
+					s = w / _bitmapData.width;
+					y = (h - _bitmapData.height * s) / 2;
+				}
+				mx = new Matrix(s, 0, 0, s, x, y);
+			} else {
+				mx = new Matrix(w / _bitmapData.width, 0, 0, h / _bitmapData.height);
+			}
+			newbmpData.draw(_bitmapData, mx, null, null, null, true);
 			_container.bitmapData = newbmpData;
 			_eventLock = false;
 		}

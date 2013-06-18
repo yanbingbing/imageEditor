@@ -222,7 +222,7 @@ package cmstop.ui
 			setScale(1);
 			var newbmpData:BitmapData = new BitmapData(Math.floor(clip.width), Math.floor(clip.height), true, 0xFFFFFF);
 			var mx:Matrix = new Matrix(1, 0, 0, 1, -clip.x, -clip.y);
-			newbmpData.draw(this.newBitmapData, mx);
+			newbmpData.draw(this.newBitmapData, mx, null, null, null, true);
 			bitmapData = newbmpData;
 		}
 		

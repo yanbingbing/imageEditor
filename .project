@@ -14,11 +14,4 @@
 	<natures>
 		<nature>com.adobe.flexbuilder.project.actionscriptnature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>bin-release</name>
-			<type>2</type>
-			<location>/Users/kakalong/Work/cmstop/public/admin/imageEditor</location>
-		</link>
-	</linkedResources>
 </projectDescription>

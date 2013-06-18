@@ -31,7 +31,7 @@ package cmstop.ui
 		
 		override protected function init(e:Event):void {
 			super.init(e);
-			var s:Slider = addSlider("quality", "输出品质", 1, 100, 80).getChildAt(1) as Slider;
+			var s:Slider = addSlider("quality", "输出品质", 1, 100, Number(Global.defaultQuality)).getChildAt(1) as Slider;
 			
 			var icon:Bitmap = new INFO_QUALITY() as Bitmap;
 			addChild(icon);

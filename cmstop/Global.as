@@ -31,7 +31,8 @@ package cmstop
 		public static var clientHost:String;
 		public static var clientPath:String;
 		public static var authCookie:String;
-		public static var authFieldName:String = "Auth-Cookie";
+		public static var defaultQuality:String = "80";
+		public static var authFieldName:String = "HTTP_COOKIE";
 		public static var uploadFieldName:String = "file";
 		public static var readFieldName:String = "file";
 		public static var sizeListUrl:String = "?app=system&controller=imgeditor&action=getPresetSizes";

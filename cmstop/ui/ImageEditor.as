@@ -164,13 +164,13 @@ package cmstop.ui {
 			
 			var request:URLRequest = new URLRequest(Global.getClientUrl(Global.params.config || 'imageEditor.conf'));
 			
-			XLoader.load(XLoader.TEXT, request, function(json:Object):void{
+			XLoader.load(XLoader.TEXT, request, function(config:Object):void {
 				var fields:Array = [
 					"authFieldName", "readFieldName", "uploadFieldName", "sizeListUrl",
-					"ratioListUrl", "waterListUrl", "saveUrl", "readUrl" ];
+					"ratioListUrl", "waterListUrl", "saveUrl", "readUrl", "defaultQuality" ];
 				for each (var key:String in fields) {
-					if ((key in json) && json[key]) {
-						Global[key] = String(json[key]);
+					if ((key in config) && config[key]) {
+						Global[key] = String(config[key]);
 					}
 				}
 				init();
